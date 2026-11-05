@@ -185,15 +185,16 @@ const mock = (()=>{
   DB.instruments.filter(x=>x.name==='Thermal scanner').slice(0,2).forEach(x=>x.site_id='s2');
   DB.instruments.filter(x=>x.name==='Temper&RH Data Logger').slice(0,40).forEach(x=>x.site_id='s2');
   const all=()=>JSON.parse(JSON.stringify(DB));
-  const up=(k,o,by)=>{ o.updated_at=new Date().toISOString(); o.updated_by=by||''; if(!o.id){o.id=uid(); DB[k].push(o);} else { const i=DB[k].findIndex(x=>x.id===o.id); if(i<0) DB[k].push(o); else DB[k][i]=o; } return all(); };
-  const del=(k,id)=>{ DB[k]=DB[k].filter(x=>x.id!==id); if(k==='sites'){ DB.people.forEach(p=>{if(p.site_id===id)p.site_id='';}); DB.instruments.forEach(p=>{if(p.site_id===id)p.site_id='';}); } return all(); };
+  const part=k=>({[k]:JSON.parse(JSON.stringify(DB[k]))});
+  const up=(k,o,by)=>{ o=JSON.parse(JSON.stringify(o)); o.updated_at=new Date().toISOString(); o.updated_by=by||''; if(!o.id||o.id.startsWith('tmp_')){o.id=uid(); DB[k].push(o);} else { const i=DB[k].findIndex(x=>x.id===o.id); if(i<0) DB[k].push(o); else DB[k][i]=o; } return part(k); };
+  const del=(k,id)=>{ DB[k]=DB[k].filter(x=>x.id!==id); if(k==='sites'){ DB.people.forEach(p=>{if(p.site_id===id)p.site_id='';}); DB.instruments.forEach(p=>{if(p.site_id===id)p.site_id='';}); return all(); } return part(k); };
   return {
     getAll:()=>all(),
     saveSite:(o,by)=>up('sites',o,by), deleteSite:(id)=>del('sites',id),
     savePerson:(o,by)=>up('people',o,by), deletePerson:(id)=>del('people',id),
     saveInstrument:(o,by)=>up('instruments',o,by), deleteInstrument:(id)=>del('instruments',id),
-    assignInstruments:(ids,siteId,by)=>{ DB.instruments.forEach(x=>{ if(ids.includes(x.id)){ x.site_id=siteId; x.updated_at=new Date().toISOString(); x.updated_by=by||''; } }); return all(); },
-    assignPeople:(ids,siteId,by)=>{ DB.people.forEach(x=>{ if(ids.includes(x.id)){ x.site_id=siteId; x.updated_at=new Date().toISOString(); x.updated_by=by||''; } }); return all(); },
+    assignInstruments:(ids,siteId,by)=>{ DB.instruments.forEach(x=>{ if(ids.includes(x.id)){ x.site_id=siteId; x.updated_at=new Date().toISOString(); x.updated_by=by||''; } }); return part('instruments'); },
+    assignPeople:(ids,siteId,by)=>{ DB.people.forEach(x=>{ if(ids.includes(x.id)){ x.site_id=siteId; x.updated_at=new Date().toISOString(); x.updated_by=by||''; } }); return part('people'); },
   };
 })();
 
@@ -260,12 +261,31 @@ async function load(silent){
   finally{ if(!silent) setLoading(false); }
 }
 function normalize(d){ d=d||{}; return {sites:d.sites||[],people:d.people||[],instruments:d.instruments||[]}; }
+/* 낙관적 저장: 화면 먼저 반영 → 서버 저장은 뒤에서. 실패하면 서버 상태로 되돌리고 알림 */
+const ENTITY={saveSite:'sites',deleteSite:'sites',savePerson:'people',deletePerson:'people',assignPeople:'people',saveInstrument:'instruments',deleteInstrument:'instruments',assignInstruments:'instruments'};
+let pending=0;
+function applyLocal(fn, args){
+  const k=ENTITY[fn], now=new Date().toISOString(), stamp=o=>{o.updated_at=now;o.updated_by=editor;return o;};
+  if(fn.startsWith('save')){ const o=stamp({...args[0]}); if(!o.id) o.id='tmp_'+Math.random().toString(36).slice(2,8); const i=data[k].findIndex(x=>x.id===o.id); if(i<0) data[k].push(o); else data[k][i]=o; }
+  else if(fn==='deleteSite'){ const id=args[0]; data.sites=data.sites.filter(x=>x.id!==id); data.people.forEach(x=>{if(x.site_id===id)x.site_id='';}); data.instruments.forEach(x=>{if(x.site_id===id)x.site_id='';}); }
+  else if(fn.startsWith('delete')){ data[k]=data[k].filter(x=>x.id!==args[0]); }
+  else if(fn.startsWith('assign')){ const [ids,site]=args; data[k].forEach(x=>{ if(ids.includes(x.id)){ x.site_id=site||''; stamp(x); } }); }
+}
+function setPending(d){ pending+=d; const s=$('#sync'); if(pending>0) s.textContent='저장 중…'; else s.textContent='동기화 '+fmtTime(new Date().toISOString())+(editor?' · 편집자 '+editor:''); }
 async function save(fn, ...args){
   if(!editor){ askEditor(()=>save(fn,...args)); return; }
-  setLoading(true);
-  try{ data=normalize(await api.call(fn, ...args, editor)); toast('저장됨'); render(); }
-  catch(e){ toast('저장 실패: '+(e.message||e),true); }
-  finally{ setLoading(false); }
+  applyLocal(fn, args); render();
+  setPending(1);
+  try{
+    const r=await api.call(fn, ...args, editor);
+    if(r && typeof r==='object'){ ['sites','people','instruments'].forEach(k=>{ if(Array.isArray(r[k])) data[k]=r[k]; }); }
+    if(pending===1) render();           // 마지막 저장이면 서버 상태로 다시 그림
+    toast('저장됨');
+  } catch(e){
+    toast('저장 실패 — 되돌립니다: '+(e.message||e),true);
+    try{ data=normalize(await api.call('getAll')); }catch(x){}
+    render();
+  } finally{ setPending(-1); }
 }
 
 /* ===================== 렌더 ===================== */
