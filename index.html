@@ -158,9 +158,10 @@ const api = {
         google.script.run.withSuccessHandler(res).withFailureHandler(e=>rej(e)).rpc(fn, args);
       } else if(USE_API){
         // text/plain 으로 보내면 CORS preflight 없이 GAS doPost 로 바로 감
-        fetch(API_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({fn, args})})
-          .then(r=>r.json()).then(j=>{ if(j && j.ok) res(j.data); else rej(new Error((j && j.error) || '서버 오류')); })
-          .catch(e=>rej(new Error('서버에 연결할 수 없습니다 ('+(e.message||e)+')')));
+        fetch(API_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({fn, args, pin})})
+          .then(r=>r.json(), e=>{ throw new Error('서버에 연결할 수 없습니다 ('+(e.message||e)+')'); })
+          .then(j=>{ if(j && j.ok) res(j.data); else rej(new Error((j && j.error) || '서버 오류')); })
+          .catch(rej);
       } else {
         setTimeout(()=>{ try{ res(mock[fn](...args)); }catch(e){ rej(e); } }, 250);
       }
@@ -204,8 +205,9 @@ let view={tab:'sites',siteId:null};
 let q={sites:'',people:'',instruments:''};
 let filt={peopleSite:'*',instSite:'*',instStatus:'*',instCat:'*'};
 let open={};               // 펼친 종류 그룹 (key → true)
-let editor='';
-try{ editor=localStorage.getItem('cx_editor')||''; }catch(e){}
+let editor='', pin='';
+try{ editor=localStorage.getItem('cx_editor')||''; pin=localStorage.getItem('cx_pin')||''; }catch(e){}
+const newId=()=>Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b=>b.toString(16).padStart(2,'0')).join('');
 
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -255,10 +257,17 @@ let busy=0;
 function setLoading(on){ busy+=on?1:-1; $('#loading').innerHTML = busy>0?'<div class="load"><div class="spin"></div></div>':''; }
 function toast(msg,err){ const t=$('#toast'); t.innerHTML=`<div class="toast${err?' err':''}">${esc(msg)}</div>`; clearTimeout(toast._t); toast._t=setTimeout(()=>t.innerHTML='',err?4000:1800); }
 async function load(silent){
+  if(silent && pending>0) return;              // 저장 응답이 오기 전의 옛 데이터로 덮어쓰지 않게
   if(!silent) setLoading(true);
-  try{ data=normalize(await api.call('getAll')); $('#sync').textContent='동기화 '+fmtTime(new Date().toISOString())+(editor?' · 편집자 '+editor:''); render(); }
-  catch(e){ toast('불러오기 실패: '+(e.message||e),true); }
+  try{ data=normalize(await api.call('getAll')); setPending(0); render(); }
+  catch(e){ if(String(e.message).includes('PIN_REQUIRED')){ askPin(()=>load(silent)); } else toast('불러오기 실패: '+(e.message||e),true); }
   finally{ if(!silent) setLoading(false); }
+}
+function askPin(then){
+  modal(`<h3>접속 코드</h3><div class="note" style="margin:0 0 10px">회사에서 안내받은 접속 코드를 입력하세요. 이 기기에 저장됩니다.</div>
+    <form id="kf"><div class="f"><input name="k" inputmode="numeric" autocomplete="off" value="" autofocus></div>
+    <div class="btns"><button class="btn p">확인</button></div></form>`);
+  $('#kf').onsubmit=e=>{ e.preventDefault(); const k=formVals(e.target).k; if(!k) return; pin=k; try{localStorage.setItem('cx_pin',k);}catch(x){} closeModal(); if(then) then(); };
 }
 function normalize(d){ d=d||{}; return {sites:d.sites||[],people:d.people||[],instruments:d.instruments||[]}; }
 /* 낙관적 저장: 화면 먼저 반영 → 서버 저장은 뒤에서. 실패하면 서버 상태로 되돌리고 알림 */
@@ -266,26 +275,30 @@ const ENTITY={saveSite:'sites',deleteSite:'sites',savePerson:'people',deletePers
 let pending=0;
 function applyLocal(fn, args){
   const k=ENTITY[fn], now=new Date().toISOString(), stamp=o=>{o.updated_at=now;o.updated_by=editor;return o;};
-  if(fn.startsWith('save')){ const o=stamp({...args[0]}); if(!o.id) o.id='tmp_'+Math.random().toString(36).slice(2,8); const i=data[k].findIndex(x=>x.id===o.id); if(i<0) data[k].push(o); else data[k][i]=o; }
+  if(fn.startsWith('save')){ const o=stamp({...args[0]}); if(!o.id) o.id=newId(); args[0]=o; const i=data[k].findIndex(x=>x.id===o.id); if(i<0) data[k].push(o); else data[k][i]=o; }
   else if(fn==='deleteSite'){ const id=args[0]; data.sites=data.sites.filter(x=>x.id!==id); data.people.forEach(x=>{if(x.site_id===id)x.site_id='';}); data.instruments.forEach(x=>{if(x.site_id===id)x.site_id='';}); }
   else if(fn.startsWith('delete')){ data[k]=data[k].filter(x=>x.id!==args[0]); }
   else if(fn.startsWith('assign')){ const [ids,site]=args; data[k].forEach(x=>{ if(ids.includes(x.id)){ x.site_id=site||''; stamp(x); } }); }
 }
-function setPending(d){ pending+=d; const s=$('#sync'); if(pending>0) s.textContent='저장 중…'; else s.textContent='동기화 '+fmtTime(new Date().toISOString())+(editor?' · 편집자 '+editor:''); }
-async function save(fn, ...args){
+function setPending(d){ pending=Math.max(0,pending+d); const s=$('#sync'); if(pending>0) s.textContent='저장 중… ('+pending+')'; else s.textContent='동기화 '+fmtTime(new Date().toISOString())+(editor?' · 편집자 '+editor:''); }
+let queue=Promise.resolve();                 // 저장은 순서대로 하나씩 (응답 순서 꼬임 방지)
+function save(fn, ...args){
   if(!editor){ askEditor(()=>save(fn,...args)); return; }
   applyLocal(fn, args); render();
   setPending(1);
-  try{
-    const r=await api.call(fn, ...args, editor);
-    if(r && typeof r==='object'){ ['sites','people','instruments'].forEach(k=>{ if(Array.isArray(r[k])) data[k]=r[k]; }); }
-    if(pending===1) render();           // 마지막 저장이면 서버 상태로 다시 그림
-    toast('저장됨');
-  } catch(e){
-    toast('저장 실패 — 되돌립니다: '+(e.message||e),true);
-    try{ data=normalize(await api.call('getAll')); }catch(x){}
-    render();
-  } finally{ setPending(-1); }
+  queue=queue.then(async()=>{
+    try{
+      const r=await api.call(fn, ...args, editor);
+      if(r && typeof r==='object'){ ['sites','people','instruments'].forEach(k=>{ if(Array.isArray(r[k])) data[k]=r[k]; }); }
+      if(pending===1) render();           // 마지막 저장이면 서버 상태로 다시 그림
+      toast('저장됨');
+    } catch(e){
+      if(String(e.message).includes('PIN_REQUIRED')){ askPin(); }
+      toast('저장 실패 — 되돌립니다: '+(e.message||e),true);
+      try{ data=normalize(await api.call('getAll')); }catch(x){}
+      render();
+    } finally{ setPending(-1); }
+  });
 }
 
 /* ===================== 렌더 ===================== */
@@ -397,8 +410,8 @@ function renderInstruments(){
 /* ===================== 이벤트 ===================== */
 function bind(){
   const m=$('#main');
-  const qi=$('#q'); if(qi){ qi.oninput=e=>{ q[view.tab]=e.target.value; const pos=e.target.selectionStart; render(); const n=$('#q'); n.focus(); n.setSelectionRange(pos,pos); }; }
-  m.querySelectorAll('[data-site]').forEach(b=>b.onclick=()=>{ view.siteId=b.dataset.site; render(); window.scrollTo(0,0); });
+  const qi=$('#q'); if(qi){ qi.oninput=e=>{ q[view.tab]=e.target.value; clearTimeout(bind._t); bind._t=setTimeout(()=>{ const pos=e.target.selectionStart; render(); const n=$('#q'); if(n){ n.focus(); n.setSelectionRange(pos,pos); } },150); }; }
+  m.querySelectorAll('[data-site]').forEach(b=>b.onclick=()=>{ view.siteId=b.dataset.site; pushSt({d:1}); render(); window.scrollTo(0,0); });
   m.querySelectorAll('[data-person]').forEach(b=>b.onclick=()=>showPerson(data.people.find(x=>x.id===b.dataset.person)));
   m.querySelectorAll('[data-inst]').forEach(b=>b.onclick=()=>openInst(data.instruments.find(x=>x.id===b.dataset.inst)));
   m.querySelectorAll('[data-grp]').forEach(b=>b.onclick=()=>{ const k=b.dataset.grp; open[k]=!open[k]; b.parentElement.classList.toggle('open',open[k]); });
@@ -406,7 +419,7 @@ function bind(){
   m.querySelectorAll('[data-isite]').forEach(b=>b.onclick=()=>{filt.instSite=b.dataset.isite;render();});
   m.querySelectorAll('[data-istat]').forEach(b=>b.onclick=()=>{filt.instStatus=b.dataset.istat;render();});
   m.querySelectorAll('[data-icat]').forEach(b=>b.onclick=()=>{filt.instCat=b.dataset.icat;render();});
-  const back=$('#back'); if(back) back.onclick=()=>{view.siteId=null;render();};
+  const back=$('#back'); if(back) back.onclick=()=>{ view.siteId=null; render(); if(history.state&&history.state.d){ ignorePop++; history.back(); } };
   const es=$('#editSite'); if(es) es.onclick=()=>openSite(data.sites.find(x=>x.id===view.siteId));
   const ap=$('#addPerson'); if(ap) ap.onclick=()=>picker('assign',view.siteId,'person');
   const mp=$('#movePerson'); if(mp) mp.onclick=()=>picker('move',view.siteId,'person');
@@ -420,8 +433,11 @@ $('#who').onclick=()=>askEditor();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&!$('#ov')) load(true); });
 
 /* ===================== 모달 ===================== */
-function modal(html){ $('#modal').innerHTML=`<div class="ov" id="ov"><div class="sheet">${html}</div></div>`; $('#ov').onclick=e=>{ if(e.target.id==='ov') closeModal(); }; }
-function closeModal(){ $('#modal').innerHTML=''; }
+const pushSt=s=>{ try{ history.pushState(s,''); }catch(e){} };
+function modal(html){ if(!$('#ov')) pushSt({m:1}); $('#modal').innerHTML=`<div class="ov" id="ov"><div class="sheet">${html}</div></div>`; $('#ov').onclick=e=>{ if(e.target.id==='ov') closeModal(); }; }
+let ignorePop=0;
+function closeModal(){ if($('#ov')){ $('#modal').innerHTML=''; if(history.state&&history.state.m){ ignorePop++; history.back(); } } }
+window.addEventListener('popstate',()=>{ if(ignorePop>0){ ignorePop--; return; } if($('#ov')) { $('#modal').innerHTML=''; return; } if(view.tab==='sites'&&view.siteId!==null){ view.siteId=null; render(); } });
 function siteSelect(cur,name){ return `<select name="${name||'site_id'}"><option value="">미배정(사무실)</option>${data.sites.map(s=>`<option value="${esc(s.id)}"${(cur||'')===s.id?' selected':''}>${esc(s.name)}</option>`).join('')}</select>`; }
 function formVals(f){ const o={}; new FormData(f).forEach((v,k)=>o[k]=String(v).trim()); return o; }
 function confirmBox(msg, onYes){ modal(`<h3>확인</h3><div style="white-space:pre-wrap">${esc(msg)}</div><div class="btns"><button class="btn s" id="no">취소</button><button class="btn d" id="yes">삭제</button></div>`); $('#no').onclick=closeModal; $('#yes').onclick=()=>{closeModal();onYes();}; }
@@ -453,7 +469,7 @@ function showPerson(p){
   modal(`<h3>${esc(p.name)} <span style="color:var(--sub);font-weight:400;font-size:14px">${esc([p.role,p.affiliation].filter(Boolean).join(' · '))}</span></h3>
     <div class="body">
       ${row('현재 위치',siteName(p.site_id))}
-      ${row('연락처',p.phone)}
+      ${p.phone?row('연락처',p.phone).replace(esc(p.phone),`<a href="tel:${esc(p.phone.replace(/[^0-9+]/g,''))}" style="color:var(--accent);text-decoration:none">${esc(p.phone)}</a> <span style="color:var(--muted);font-size:12px">(터치하면 전화)</span>`):''}
       ${row('이메일',p.email)}
       ${row('생년월일',p.birth)}
       ${row('입사일',p.hired)}
@@ -513,8 +529,8 @@ function openInst(i, defSite){
 /* 측정기 선택기: assign = 이 현장으로 가져오기, move = 이 현장 것을 다른 곳으로 */
 function picker(mode, siteId, kind){
   const isP = kind==='person'; const unitN = isP?'명':'대'; const what = isP?'인원':'측정기';
-  const sel=new Set(); let kw='', cat='*', onlyFree=true;
-  let target = mode==='assign' ? siteId : '';
+  const sel=new Set(); let kw='', cat='*', onlyFree=siteId!=='';          // 미배정 화면에선 다른 현장 것만 보이므로 체크박스 의미 없음
+  let target = mode==='assign' ? siteId : (siteId==='' ? (data.sites[0]?data.sites[0].id:'') : '');
   const render=()=>{
     const pool = isP?data.people:data.instruments;
     let src = mode==='assign'
@@ -530,7 +546,7 @@ function picker(mode, siteId, kind){
     const body = `<h3>${esc(title)}</h3>${tgt}
       <div class="search" style="margin-bottom:6px"><input id="pq" placeholder="${isP?'이름·직급 검색':'품명·모델·S/N 검색'}" value="${esc(kw)}"></div>
       ${cats.length?`<div class="chips"><button class="chip${cat==='*'?' on':''}" data-pc="*">전체</button>${cats.map(c=>`<button class="chip${cat===c?' on':''}" data-pc="${esc(c)}">${esc(c)}</button>`).join('')}</div>`:''}
-      ${mode==='assign'?`<label class="sw"><input type="checkbox" id="onlyFree"${onlyFree?' checked':''}> 미배정(사무실)만 보기 — 끄면 다른 현장에 있는 ${what}도 가져올 수 있음</label>`:''}
+      ${mode==='assign'&&siteId!==''?`<label class="sw"><input type="checkbox" id="onlyFree"${onlyFree?' checked':''}> 미배정(사무실)만 보기 — 끄면 다른 현장에 있는 ${what}도 가져올 수 있음</label>`:''}
       <div class="body">${groups.map(g=>groupBlock(g,{ns:'p',pick:true,people:isP,selected:sel,showSite:!onlyFree||mode==='move',forceOpen:!!k||groups.length===1||isP})).join('')||'<div class="empty">해당 항목 없음</div>'}</div>
       <div class="btns"><button class="btn s w" id="c">취소</button><button class="btn p" id="ok"${sel.size?'':' disabled'}>${sel.size?`${sel.size}${unitN} ${mode==='assign'?'배정':'이동'}`:'선택하세요'}</button></div>`;
     const ov=$('#ov'); if(ov){ ov.querySelector('.sheet').innerHTML=body; } else modal(body);
