@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex, nofollow">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>현장 관리</title>
+<style>
+  html,body{margin:0;height:100%;background:#0f172a;overflow:hidden}
+  iframe{position:fixed;inset:0;width:100%;height:100%;border:0;background:#f3f4f6}
+  #off{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#e5e7eb;font:15px/1.5 -apple-system,"Noto Sans KR",sans-serif;text-align:center;padding:24px}
+  #off button{background:#2563eb;color:#fff;border:0;border-radius:10px;padding:12px 20px;font:inherit;font-weight:700}
+  #bar{position:fixed;top:0;left:0;height:3px;width:0;background:#2563eb;transition:width .4s;z-index:2}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<iframe id="app" allow="clipboard-write" referrerpolicy="no-referrer"></iframe>
+<div id="off"><div>인터넷 연결을 확인해 주세요.</div><button onclick="go()">다시 시도</button></div>
+<script>
+const APP_URL = "https://script.google.com/macros/s/AKfycbxBdyutkRMEmHY1N3GLyxkonW2s3XjBdpi86ztCiIcK64VnsbKY0yqZu-NhGI2-qHYU_w/exec";
+const f = document.getElementById('app'), bar = document.getElementById('bar'), off = document.getElementById('off');
+function go(){ off.style.display='none'; bar.style.width='60%'; f.src = APP_URL; }
+f.addEventListener('load', () => { bar.style.width='100%'; setTimeout(()=>bar.style.width='0', 400); });
+window.addEventListener('offline', () => off.style.display='flex');
+window.addEventListener('online', go);
+if (!navigator.onLine) off.style.display='flex'; else go();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
