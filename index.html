@@ -14,112 +14,116 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f3f4f6; --card:#fff; --ink:#111827; --sub:#6b7280; --line:#e5e7eb;
-  --brand:#0f172a; --accent:#2563eb; --ok:#16a34a; --warn:#d97706; --bad:#dc2626; --muted:#9ca3af;
+  --bg:#f4f4f5; --card:#fff; --ink:#111214; --sub:#5b6068; --muted:#8a8f98; --line:#cfd3d9; --line2:#e6e8eb;
+  --accent:#1d4ed8; --ok:#15803d; --okbg:#e8f5ec; --warn:#b45309; --warnbg:#fdf1dc; --bad:#b91c1c; --badbg:#fde8e8;
   --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.45}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;border:0;background:none;padding:0}
 #app{display:flex;flex-direction:column;min-height:100%}
-header{position:sticky;top:0;z-index:10;background:var(--brand);color:#fff;padding:calc(10px + var(--sat)) 14px 10px}
+header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);padding:calc(10px + var(--sat)) 16px 8px}
 .hrow{display:flex;align-items:center;gap:8px}
-.hrow h1{font-size:17px;font-weight:700;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hbtn{color:#fff;opacity:.9;padding:6px 8px;border-radius:8px;font-size:13px;background:rgba(255,255,255,.12)}
-.hbtn.icon{width:34px;height:34px;display:grid;place-items:center;padding:0;font-size:18px}
-.sync{font-size:11px;opacity:.65;margin-top:4px}
+.hrow h1{font-size:18px;font-weight:700;margin:0;flex:1;letter-spacing:-.01em}
+.hbtn{color:var(--ink);padding:6px 10px;border-radius:8px;font-size:13px;font-weight:500;border:1px solid var(--line);background:#fff}
+.hbtn.icon{width:34px;height:34px;display:grid;place-items:center;padding:0}
+.hbtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sync{font-size:12px;color:var(--muted);margin-top:4px}
 main{flex:1;padding:12px 12px calc(76px + var(--sab))}
 nav{position:fixed;left:0;right:0;bottom:0;z-index:10;background:#fff;border-top:1px solid var(--line);display:flex;padding-bottom:var(--sab)}
-nav button{flex:1;padding:9px 0 8px;font-size:12px;color:var(--sub);display:flex;flex-direction:column;align-items:center;gap:2px}
-nav button .ic{font-size:20px;line-height:1}
+nav button{flex:1;padding:8px 0 7px;font-size:11px;font-weight:500;color:var(--sub);display:flex;flex-direction:column;align-items:center;gap:3px}
+nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 nav button.on{color:var(--accent);font-weight:700}
 .search{display:flex;gap:8px;margin-bottom:10px}
 .search input{flex:1;border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 12px;font-size:15px;outline:none}
-.search input:focus{border-color:var(--accent)}
+.search input:focus{border-color:var(--ink)}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:2px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
-.chip{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 11px;font-size:13px;color:var(--sub)}
-.chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
-.card{background:var(--card);border-radius:14px;padding:13px 14px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.05);display:block;width:100%;text-align:left}
-.card .t{font-weight:700;font-size:16px;display:flex;align-items:center;gap:6px}
+.chip{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:500;color:var(--sub)}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:8px;display:block;width:100%;text-align:left}
+.card .t{font-weight:700;font-size:16px;display:flex;align-items:center;gap:6px;letter-spacing:-.01em}
 .card .s{color:var(--sub);font-size:13px;margin-top:2px}
-.card .m{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
-.pill{font-size:12px;padding:2px 8px;border-radius:999px;background:#eef2ff;color:#3730a3;white-space:nowrap}
-.pill.g{background:#ecfdf5;color:#065f46}
-.pill.y{background:#fffbeb;color:#92400e}
-.pill.r{background:#fef2f2;color:#991b1b}
-.pill.x{background:#f3f4f6;color:#4b5563}
-.sec{display:flex;align-items:center;justify-content:space-between;margin:16px 2px 8px;gap:6px}
-.sec h2{font-size:14px;color:var(--sub);margin:0;font-weight:700;flex:1}
-.sec .add{color:var(--accent);font-weight:700;font-size:13px;padding:4px 9px;border-radius:8px;background:#eff6ff}
-.row{display:flex;align-items:center;gap:10px;background:#fff;padding:10px 13px;border-radius:12px;margin-bottom:6px;width:100%;text-align:left}
-.row .av{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-weight:700;font-size:14px;flex-shrink:0;background:#e0e7ff;color:#3730a3}
-.row .av.i{background:#dcfce7;color:#166534}
-.row .av.i.y{background:#fef3c7;color:#92400e}
-.row .av.i.r{background:#fee2e2;color:#991b1b}
-.row .av.i.x{background:#f3f4f6;color:#6b7280}
+.card .m{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;font-size:13px;color:var(--sub)}
+.card .m b{font-weight:700;color:var(--ink)}
+.card .m .r{color:var(--bad);font-weight:700}
+.pill{font-size:12px;font-weight:500;padding:2px 8px;border-radius:6px;background:#f1f2f4;color:var(--sub);white-space:nowrap}
+.pill.g{background:var(--okbg);color:var(--ok)}
+.pill.y{background:var(--warnbg);color:var(--warn)}
+.pill.r{background:var(--badbg);color:var(--bad);font-weight:700}
+.pill.x{background:transparent;color:var(--muted);padding:2px 0}
+.sec{display:flex;align-items:center;justify-content:space-between;margin:18px 2px 8px;gap:6px}
+.sec h2{font-size:13px;color:var(--sub);margin:0;font-weight:700;flex:1;letter-spacing:.02em}
+.sec .add{color:var(--accent);font-weight:700;font-size:13px;padding:5px 10px;border-radius:8px;border:1px solid var(--accent);background:#fff}
+.sec .add.sub{color:var(--sub);border-color:var(--line)}
+.row{display:flex;align-items:center;gap:10px;background:#fff;padding:11px 13px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;width:100%;text-align:left}
 .row .b{flex:1;min-width:0}
 .row .n{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row .d{font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row .r{font-size:12px;color:var(--sub);text-align:right;flex-shrink:0}
-/* 종류 그룹 */
-.grp{background:#fff;border-radius:12px;margin-bottom:6px;overflow:hidden}
-.grp .gh{display:flex;align-items:center;gap:8px;padding:11px 13px;width:100%;text-align:left}
-.grp .gh .ar{color:var(--muted);font-size:12px;width:12px;transition:transform .15s}
+.grp{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden}
+.grp .gh{display:flex;align-items:center;gap:8px;padding:12px 13px;width:100%;text-align:left}
+.grp .gh .ar{width:16px;height:16px;flex-shrink:0;transition:transform .15s;color:var(--muted);display:grid;place-items:center}
+.grp .gh .ar svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .grp.open .gh .ar{transform:rotate(90deg)}
-.grp .gh .n{flex:1;font-weight:700;min-width:0;font-size:14px;line-height:1.3}
-.grp .gh .c{font-size:12px;color:var(--sub);display:flex;gap:4px;flex-shrink:0}
-.grp .gb{display:none;border-top:1px solid var(--line)}
+.grp .gh .n{flex:1;font-weight:700;min-width:0;font-size:14px;line-height:1.3;letter-spacing:-.01em}
+.grp .gh .c{font-size:12px;color:var(--sub);display:flex;gap:8px;flex-shrink:0;align-items:center}
+.grp .gh .c .pill{padding:2px 6px}
+.grp .gb{display:none;border-top:1px solid var(--line2)}
 .grp.open .gb{display:block}
-.unit{display:flex;align-items:center;gap:10px;padding:9px 13px 9px 16px;border-bottom:1px solid #f3f4f6;width:100%;text-align:left}
+.unit{display:flex;align-items:center;gap:10px;padding:10px 13px 10px 14px;border-bottom:1px solid var(--line2);width:100%;text-align:left}
 .unit:last-child{border-bottom:0}
-.unit .cb{width:20px;height:20px;border:2px solid #cbd5e1;border-radius:6px;flex-shrink:0;display:grid;place-items:center;font-size:13px;color:#fff}
+.unit .cb{width:20px;height:20px;border:2px solid var(--line);border-radius:5px;flex-shrink:0;display:grid;place-items:center;font-size:13px;color:#fff;background:#fff}
 .unit.sel .cb{background:var(--accent);border-color:var(--accent)}
 .unit .b{flex:1;min-width:0}
 .unit .n{font-weight:500;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .unit .d{font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.unit .r{flex-shrink:0}
+.unit .r{flex-shrink:0;text-align:right}
 .empty{color:var(--muted);text-align:center;padding:28px 10px;font-size:14px}
-.back{display:inline-flex;align-items:center;gap:4px;color:var(--sub);font-size:14px;margin-bottom:8px;padding:4px 0}
-.detail-h{background:#fff;border-radius:14px;padding:14px;margin-bottom:6px}
-.detail-h .t{font-size:19px;font-weight:700;display:flex;align-items:center;justify-content:space-between}
-.detail-h .t button{color:var(--accent);font-size:13px;font-weight:700;background:#eff6ff;padding:5px 10px;border-radius:8px}
+.back{display:inline-flex;align-items:center;gap:4px;color:var(--sub);font-size:14px;font-weight:500;margin-bottom:8px;padding:4px 0}
+.back svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.detail-h{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:6px}
+.detail-h .t{font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:space-between;letter-spacing:-.01em}
+.detail-h .t button{color:var(--ink);font-size:13px;font-weight:500;border:1px solid var(--line);padding:5px 10px;border-radius:8px;background:#fff}
 .detail-h .s{color:var(--sub);font-size:13px;margin-top:4px;white-space:pre-wrap}
-.fab{position:fixed;right:16px;bottom:calc(66px + var(--sab));z-index:9;width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;font-size:28px;line-height:1;box-shadow:0 6px 16px rgba(37,99,235,.4);display:grid;place-items:center}
-/* modal */
-.ov{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:20;display:flex;align-items:flex-end;justify-content:center}
-.sheet{background:#fff;width:100%;max-width:560px;border-radius:18px 18px 0 0;max-height:92vh;overflow:auto;padding:14px 16px calc(16px + var(--sab));display:flex;flex-direction:column}
-.sheet h3{margin:4px 0 12px;font-size:17px}
+.fab{position:fixed;right:16px;bottom:calc(66px + var(--sab));z-index:9;width:52px;height:52px;border-radius:50%;background:var(--ink);color:#fff;box-shadow:0 6px 16px rgba(0,0,0,.25);display:grid;place-items:center}
+.fab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.ov{position:fixed;inset:0;background:rgba(17,18,20,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:#fff;width:100%;max-width:560px;border-radius:16px 16px 0 0;max-height:92vh;overflow:auto;padding:16px 16px calc(16px + var(--sab));display:flex;flex-direction:column}
 .sheet>*{flex-shrink:0}
 .sheet .body{flex:1 1 auto;overflow:auto;margin:0 -4px;padding:0 4px;min-height:120px}
+.sheet h3{margin:2px 0 14px;font-size:17px;font-weight:700;letter-spacing:-.01em}
 .f{margin-bottom:10px}
-.f label{display:block;font-size:12px;color:var(--sub);margin-bottom:4px}
-.f input,.f select,.f textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;background:#fff;outline:none}
-.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--accent)}
+.f label{display:block;font-size:12px;font-weight:500;color:var(--sub);margin-bottom:4px}
+.f input,.f select,.f textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:15px;background:#fff;outline:none}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--ink)}
 .f textarea{min-height:56px;resize:vertical}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .btns{display:flex;gap:8px;margin-top:14px}
-.btn{flex:1;padding:12px;border-radius:12px;font-weight:700;font-size:15px;text-align:center}
+.btn{flex:1;padding:12px;border-radius:10px;font-weight:700;font-size:15px;text-align:center;border:1px solid transparent}
 .btn.p{background:var(--accent);color:#fff}
-.btn.p:disabled{background:#93c5fd}
-.btn.s{background:#f3f4f6;color:var(--ink)}
-.btn.d{background:#fef2f2;color:var(--bad)}
+.btn.p:disabled{background:#c7d2fe;color:#fff}
+.btn.s{background:#fff;color:var(--ink);border-color:var(--line)}
+.btn.d{background:#fff;color:var(--bad);border-color:#f3c5c5}
 .btn.w{flex:0 0 auto;padding:12px 14px}
-.opt{display:block;width:100%;text-align:left;padding:13px 14px;border-radius:12px;background:#f3f4f6;margin-bottom:8px;font-weight:500}
+.opt{display:block;width:100%;text-align:left;padding:13px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;margin-bottom:8px;font-weight:500}
 .opt small{display:block;color:var(--sub);font-weight:400;font-size:12px}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(80px + var(--sab));background:#111827;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:30;max-width:90%;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(80px + var(--sab));background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:30;max-width:90%;box-shadow:0 4px 14px rgba(0,0,0,.3)}
 .toast.err{background:var(--bad)}
 .load{position:fixed;inset:0;z-index:25;display:grid;place-items:center;background:rgba(255,255,255,.5)}
-.spin{width:34px;height:34px;border:4px solid #c7d2fe;border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite}
+.spin{width:34px;height:34px;border:4px solid #d9ddf5;border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
-.demo{background:#fef3c7;color:#92400e;font-size:12px;padding:6px 12px;text-align:center}
+.demo{background:var(--warnbg);color:var(--warn);font-size:12px;padding:6px 12px;text-align:center}
 .note{font-size:12px;color:var(--sub);white-space:pre-wrap;margin-top:6px}
-.tgt{display:flex;align-items:center;gap:8px;background:#f3f4f6;border-radius:10px;padding:8px 10px;margin-bottom:8px;font-size:14px}
+.tgt{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:8px;font-size:14px}
 .tgt select{flex:1;border:0;background:transparent;font-weight:700;outline:none}
 .sw{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--sub);margin:4px 2px 8px}
 .sw input{width:16px;height:16px}
+.kv{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line2)}
+.kv .k{width:72px;color:var(--sub);font-size:13px;flex-shrink:0}
+.kv .v{flex:1;user-select:text;-webkit-user-select:text}
 </style>
 </head>
 <body>
@@ -128,16 +132,16 @@ nav button.on{color:var(--accent);font-weight:700}
     <div class="hrow">
       <h1 id="title">현장 관리</h1>
       <button class="hbtn" id="who" title="편집자 이름 변경">이름</button>
-      <button class="hbtn icon" id="refresh" title="새로고침">↻</button>
+      <button class="hbtn icon" id="refresh" title="새로고침"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.5-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.5 4.5L20 16M20 20v-4h-4"/></svg></button>
     </div>
     <div class="sync" id="sync">불러오는 중…</div>
   </header>
   <div class="demo" id="demo" style="display:none">미리보기 모드 — 데이터가 저장되지 않습니다 (서버 연결 전)</div>
   <main id="main"></main>
   <nav>
-    <button data-tab="sites"><span class="ic">🏗</span>현장</button>
-    <button data-tab="people"><span class="ic">👷</span>인원</button>
-    <button data-tab="instruments"><span class="ic">📟</span>측정기</button>
+    <button data-tab="sites"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 11h.01M15 11h.01M12 11h.01"/></svg>현장</button>
+    <button data-tab="people"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4.5-6.2"/></svg>인원</button>
+    <button data-tab="instruments"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h4"/></svg>측정기</button>
   </nav>
 </div>
 <div id="modal"></div>
@@ -211,7 +215,7 @@ const newId=()=>Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b=>b.t
 
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const siteName=id=>{ if(!id) return '미배정(사무실)'; const s=data.sites.find(x=>x.id===id); return s?s.name:'(삭제된 현장)'; };
+const siteName=id=>{ if(!id) return '사무실'; const s=data.sites.find(x=>x.id===id); return s?s.name:'(삭제된 현장)'; };
 const today=()=>{ const t=new Date(); return new Date(t.getFullYear(),t.getMonth(),t.getDate()); };
 const baseModel=i=>(i.model||'').replace(/\s*\(\s*#?\d+\s*\)\s*$/,'').replace(/\s*#\d+\s*$/,'').trim();
 const RANK=['대표이사','부사장','전무','상무','이사','부장','차장','과장','대리','주임','사원'];
@@ -322,11 +326,11 @@ function renderSites(){
   const card=(s,id)=>{ const c=counts(id); return `<button class="card" data-site="${esc(id)}">
     <div class="t">${esc(s.name)}</div>
     <div class="s">${esc([s.client,s.location,s.period].filter(Boolean).join(' · '))||'&nbsp;'}</div>
-    <div class="m"><span class="pill">인원 ${c.p}</span><span class="pill g">측정기 ${c.i}</span>${c.warn?`<span class="pill r">교정 주의 ${c.warn}</span>`:''}</div></button>`; };
+    <div class="m"><span>인원 <b>${c.p}</b></span><span>측정기 <b>${c.i}</b></span>${c.warn?`<span class="r">교정 주의 ${c.warn}</span>`:''}</div></button>`; };
   return `<div class="search"><input id="q" placeholder="현장·발주처 검색" value="${esc(q.sites)}"></div>
-    ${!kw?card({name:'미배정(사무실)',client:'현장에 배정되지 않은 인원·측정기'},''):''}
+    ${!kw?card({name:'사무실',client:'현장에 나가 있지 않은 인원·측정기'},''):''}
     ${list.map(s=>card(s,s.id)).join('')||'<div class="empty">등록된 현장이 없습니다. + 버튼으로 추가하세요.</div>'}
-    <button class="fab" id="fab" title="현장 추가">+</button>`;
+    <button class="fab" id="fab" title="현장 추가"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`;
 }
 function personUnit(p,opts){ opts=opts||{};
   return `<button class="unit${opts.sel?' sel':''}" data-${opts.pick?'pick':'person'}="${esc(p.id)}">
@@ -334,7 +338,6 @@ function personUnit(p,opts){ opts=opts||{};
     <div class="b"><div class="n">${esc(p.name)} <span style="color:var(--sub);font-weight:400;font-size:13px">${esc(p.role||'')}</span></div>
     <div class="d">${esc(p.phone||'')}${opts.showSite?' · '+esc(siteName(p.site_id)):''}</div></div></button>`; }
 function personRow(p,showSite){ return `<button class="row" data-person="${esc(p.id)}">
-  <div class="av">${esc((p.name||'?').slice(0,1))}</div>
   <div class="b"><div class="n">${esc(p.name)} <span style="color:var(--sub);font-weight:400;font-size:13px">${esc([p.affiliation,p.role].filter(Boolean).join(' '))}</span></div>
   <div class="d">${esc(showSite?siteName(p.site_id):(p.phone||p.note||''))}</div></div>
   ${p.phone?`<div class="r">${esc(p.phone)}</div>`:''}</button>`; }
@@ -347,27 +350,27 @@ function unitRow(i,opts){ opts=opts||{}; const c=calInfo(i);
 function groupBlock(g,opts){ opts=opts||{}; const k='g:'+(opts.ns||'')+g.key; const isOpen=!!open[k]||opts.forceOpen; const isP=!!opts.people;
   const onSite=g.items.filter(x=>x.site_id).length, warn=isP?0:g.items.filter(isWarn).length, selN=opts.selected?g.items.filter(x=>opts.selected.has(x.id)).length:0;
   const rowFn=i=>isP?personUnit(i,{pick:opts.pick,sel:opts.selected&&opts.selected.has(i.id),showSite:opts.showSite}):unitRow(i,{pick:opts.pick,sel:opts.selected&&opts.selected.has(i.id),showSite:opts.showSite});
-  return `<div class="grp${isOpen?' open':''}"><button class="gh" data-grp="${esc(k)}"><span class="ar">▶</span><span class="n">${esc(g.title)}</span>
-    <span class="c">${selN?`<span class="pill">${selN} 선택</span>`:''}<span class="pill x">${g.items.length}${isP?'명':'대'}</span>${opts.showOnSite&&onSite?`<span class="pill">현장 ${onSite}</span>`:''}${warn?`<span class="pill r">주의 ${warn}</span>`:''}</span></button>
+  return `<div class="grp${isOpen?' open':''}"><button class="gh" data-grp="${esc(k)}"><span class="ar"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span><span class="n">${esc(g.title)}</span>
+    <span class="c">${selN?`<span class="pill sel-n" style="background:#e8edfb;color:var(--accent);font-weight:700">${selN} 선택</span>`:''}<span>${g.items.length}${isP?'명':'대'}</span>${opts.showOnSite&&onSite?`<span>현장 ${onSite}</span>`:''}${warn?`<span class="pill r">주의 ${warn}</span>`:''}</span></button>
     <div class="gb">${g.items.map(rowFn).join('')}</div></div>`; }
 function renderSiteDetail(id){
-  const s = id ? data.sites.find(x=>x.id===id) : {name:'미배정(사무실)',note:'현장에 배정되지 않은 인원과 측정기'};
+  const s = id ? data.sites.find(x=>x.id===id) : {name:'사무실',note:'현장에 나가 있지 않은 인원과 측정기'};
   if(!s){ view.siteId=null; return renderSites(); }
   const ppl=data.people.filter(x=>(x.site_id||'')===id);
   const ins=data.instruments.filter(x=>(x.site_id||'')===id);
   const groups=groupByType(ins);
-  return `<button class="back" id="back">‹ 현장 목록</button>
+  return `<button class="back" id="back"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>현장 목록</button>
     <div class="detail-h"><div class="t"><span>${esc(s.name)}</span>${id?`<button id="editSite">수정</button>`:''}</div>
       <div class="s">${esc([s.client,s.location,s.period].filter(Boolean).join(' · '))}</div>
       ${s.note?`<div class="note">${esc(s.note)}</div>`:''}
       ${s.updated_by?`<div class="note">최근 수정: ${esc(s.updated_by)} ${fmtTime(s.updated_at)}</div>`:''}</div>
-    <div class="sec"><h2>인원 ${ppl.length}</h2>${ppl.length?`<button class="add" id="movePerson" style="background:#f3f4f6;color:var(--sub)">철수·이동</button>`:''}<button class="add" id="addPerson">+ 배정</button></div>
+    <div class="sec"><h2>인원 ${ppl.length}</h2>${ppl.length?`<button class="add sub" id="movePerson">철수·이동</button>`:''}<button class="add" id="addPerson">+ 배정</button></div>
     ${groupPeople(ppl).map(g=>groupBlock(g,{ns:'dp',people:true,forceOpen:true})).join('')||'<div class="empty">배정된 인원 없음</div>'}
-    <div class="sec"><h2>측정기 ${ins.length}</h2>${ins.length?`<button class="add" id="moveInst" style="background:#f3f4f6;color:var(--sub)">반납·이동</button>`:''}<button class="add" id="addInst">+ 배정</button></div>
+    <div class="sec"><h2>측정기 ${ins.length}</h2>${ins.length?`<button class="add sub" id="moveInst">반납·이동</button>`:''}<button class="add" id="addInst">+ 배정</button></div>
     ${groups.map(g=>groupBlock(g,{ns:'d'})).join('')||'<div class="empty">배정된 측정기 없음</div>'}`;
 }
 function siteChips(cur,key){
-  const opts=[['*','전체'],['','미배정'],...data.sites.map(s=>[s.id,s.name])];
+  const opts=[['*','전체'],['','사무실'],...data.sites.map(s=>[s.id,s.name])];
   return `<div class="chips">${opts.map(([v,l])=>`<button class="chip${cur===v?' on':''}" data-${key}="${esc(v)}">${esc(l)}</button>`).join('')}</div>`;
 }
 function catChips(cur,key){
@@ -383,7 +386,7 @@ function renderPeople(){
   return `<div class="search"><input id="q" placeholder="이름·직급·소속 검색" value="${esc(q.people)}"></div>
     ${siteChips(filt.peopleSite,'psite')}
     ${groups.map(g=>groupBlock(g,{ns:'lp',people:true,showSite:true,showOnSite:true,forceOpen:!!kw||filt.peopleSite!=='*'})).join('')||'<div class="empty">인원 없음</div>'}
-    <button class="fab" id="fab" title="인원 신규 등록">+</button>`;
+    <button class="fab" id="fab" title="인원 신규 등록"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`;
 }
 function renderInstruments(){
   const kw=q.instruments.trim().toLowerCase();
@@ -404,7 +407,7 @@ function renderInstruments(){
     </div>
     ${siteChips(filt.instSite,'isite')}
     ${groups.map(g=>groupBlock(g,{ns:'l',showSite:true,showOnSite:true,forceOpen})).join('')||'<div class="empty">측정기 없음</div>'}
-    <button class="fab" id="fab" title="측정기 신규 등록">+</button>`;
+    <button class="fab" id="fab" title="측정기 신규 등록"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`;
 }
 
 /* ===================== 이벤트 ===================== */
@@ -438,7 +441,7 @@ function modal(html){ if(!$('#ov')) pushSt({m:1}); $('#modal').innerHTML=`<div c
 let ignorePop=0;
 function closeModal(){ if($('#ov')){ $('#modal').innerHTML=''; if(history.state&&history.state.m){ ignorePop++; history.back(); } } }
 window.addEventListener('popstate',()=>{ if(ignorePop>0){ ignorePop--; return; } if($('#ov')) { $('#modal').innerHTML=''; return; } if(view.tab==='sites'&&view.siteId!==null){ view.siteId=null; render(); } });
-function siteSelect(cur,name){ return `<select name="${name||'site_id'}"><option value="">미배정(사무실)</option>${data.sites.map(s=>`<option value="${esc(s.id)}"${(cur||'')===s.id?' selected':''}>${esc(s.name)}</option>`).join('')}</select>`; }
+function siteSelect(cur,name){ return `<select name="${name||'site_id'}"><option value="">사무실</option>${data.sites.map(s=>`<option value="${esc(s.id)}"${(cur||'')===s.id?' selected':''}>${esc(s.name)}</option>`).join('')}</select>`; }
 function formVals(f){ const o={}; new FormData(f).forEach((v,k)=>o[k]=String(v).trim()); return o; }
 function confirmBox(msg, onYes){ modal(`<h3>확인</h3><div style="white-space:pre-wrap">${esc(msg)}</div><div class="btns"><button class="btn s" id="no">취소</button><button class="btn d" id="yes">삭제</button></div>`); $('#no').onclick=closeModal; $('#yes').onclick=()=>{closeModal();onYes();}; }
 
@@ -460,12 +463,12 @@ function openSite(s){
     <div class="f"><label>메모</label><textarea name="note">${esc(o.note)}</textarea></div>
     <div class="btns">${s?'<button type="button" class="btn d w" id="del">삭제</button>':''}<button type="button" class="btn s" id="c">취소</button><button class="btn p">저장</button></div></form>`);
   $('#c').onclick=closeModal;
-  if(s) $('#del').onclick=()=>{ const c=counts(s.id); confirmBox(`"${s.name}" 현장을 삭제할까요?\n소속 인원 ${c.p}명, 측정기 ${c.i}대는 미배정으로 이동됩니다.`, ()=>{ view.siteId=null; save('deleteSite', s.id); }); };
+  if(s) $('#del').onclick=()=>{ const c=counts(s.id); confirmBox(`"${s.name}" 현장을 삭제할까요?\n소속 인원 ${c.p}명, 측정기 ${c.i}대는 사무실로 이동됩니다.`, ()=>{ view.siteId=null; save('deleteSite', s.id); }); };
   $('#sf').onsubmit=e=>{ e.preventDefault(); const v=formVals(e.target); closeModal(); save('saveSite', {...o, ...v}); };
 }
 function showPerson(p){
   if(!p) return;
-  const row=(l,v)=>v?`<div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #f3f4f6"><div style="width:72px;color:var(--sub);font-size:13px;flex-shrink:0">${l}</div><div style="flex:1;user-select:text;-webkit-user-select:text">${esc(v)}</div></div>`:'';
+  const row=(l,v)=>v?`<div class="kv"><div class="k">${l}</div><div class="v">${esc(v)}</div></div>`:'';
   modal(`<h3>${esc(p.name)} <span style="color:var(--sub);font-weight:400;font-size:14px">${esc([p.role,p.affiliation].filter(Boolean).join(' · '))}</span></h3>
     <div class="body">
       ${row('현재 위치',siteName(p.site_id))}
@@ -523,13 +526,13 @@ function openInst(i, defSite){
   const f=$('#if');
   const auto=()=>{ const d=f.cal_date.value, c=f.cal_cycle.value; if(d&&c) f.cal_due.value=addMonths(d,c); };
   f.cal_date.onchange=auto; f.cal_cycle.onchange=auto;
-  if(i) $('#del').onclick=()=>confirmBox(`"${i.name} ${fullLabel(i)}" 을(를) 마스터 목록에서 삭제할까요?\n현장에서 빼는 거라면 삭제 대신 위치를 '미배정'으로 바꾸세요.`, ()=>save('deleteInstrument', i.id));
+  if(i) $('#del').onclick=()=>confirmBox(`"${i.name} ${fullLabel(i)}" 을(를) 마스터 목록에서 삭제할까요?\n현장에서 빼는 거라면 삭제 대신 위치를 '사무실'로 바꾸세요.`, ()=>save('deleteInstrument', i.id));
   f.onsubmit=e=>{ e.preventDefault(); const v=formVals(f); closeModal(); save('saveInstrument', {...o, ...v}); };
 }
 /* 측정기 선택기: assign = 이 현장으로 가져오기, move = 이 현장 것을 다른 곳으로 */
 function picker(mode, siteId, kind){
   const isP = kind==='person'; const unitN = isP?'명':'대'; const what = isP?'인원':'측정기';
-  const sel=new Set(); let kw='', cat='*', onlyFree=siteId!=='';          // 미배정 화면에선 다른 현장 것만 보이므로 체크박스 의미 없음
+  const sel=new Set(); let kw='', cat='*', onlyFree=siteId!=='';          // 사무실 화면에선 다른 현장 것만 보이므로 체크박스 의미 없음
   let target = mode==='assign' ? siteId : (siteId==='' ? (data.sites[0]?data.sites[0].id:'') : '');
   const render=()=>{
     const pool = isP?data.people:data.instruments;
@@ -546,7 +549,7 @@ function picker(mode, siteId, kind){
     const body = `<h3>${esc(title)}</h3>${tgt}
       <div class="search" style="margin-bottom:6px"><input id="pq" placeholder="${isP?'이름·직급 검색':'품명·모델·S/N 검색'}" value="${esc(kw)}"></div>
       ${cats.length?`<div class="chips"><button class="chip${cat==='*'?' on':''}" data-pc="*">전체</button>${cats.map(c=>`<button class="chip${cat===c?' on':''}" data-pc="${esc(c)}">${esc(c)}</button>`).join('')}</div>`:''}
-      ${mode==='assign'&&siteId!==''?`<label class="sw"><input type="checkbox" id="onlyFree"${onlyFree?' checked':''}> 미배정(사무실)만 보기 — 끄면 다른 현장에 있는 ${what}도 가져올 수 있음</label>`:''}
+      ${mode==='assign'&&siteId!==''?`<label class="sw"><input type="checkbox" id="onlyFree"${onlyFree?' checked':''}> 사무실 것만 보기 — 끄면 다른 현장에 있는 ${what}도 가져올 수 있음</label>`:''}
       <div class="body">${groups.map(g=>groupBlock(g,{ns:'p',pick:true,people:isP,selected:sel,showSite:!onlyFree||mode==='move',forceOpen:!!k||groups.length===1||isP})).join('')||'<div class="empty">해당 항목 없음</div>'}</div>
       <div class="btns"><button class="btn s w" id="c">취소</button><button class="btn p" id="ok"${sel.size?'':' disabled'}>${sel.size?`${sel.size}${unitN} ${mode==='assign'?'배정':'이동'}`:'선택하세요'}</button></div>`;
     const ov=$('#ov'); if(ov){ ov.querySelector('.sheet').innerHTML=body; } else modal(body);
@@ -556,7 +559,7 @@ function picker(mode, siteId, kind){
     const of=$('#onlyFree'); if(of) of.onchange=e=>{onlyFree=e.target.checked;render();};
     const ts=$('#tgtSel'); if(ts) ts.onchange=e=>{target=e.target.value;};
     document.querySelectorAll('#ov [data-grp]').forEach(b=>b.onclick=()=>{ const kk=b.dataset.grp; open[kk]=!open[kk]; b.parentElement.classList.toggle('open',open[kk]); });
-    document.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{ const id=b.dataset.pick; sel.has(id)?sel.delete(id):sel.add(id); b.classList.toggle('sel',sel.has(id)); b.querySelector('.cb').textContent=sel.has(id)?'✓':''; const ok=$('#ok'); ok.disabled=!sel.size; ok.textContent=sel.size?`${sel.size}${unitN} ${mode==='assign'?'배정':'이동'}`:'선택하세요'; const gh=b.closest('.grp').querySelector('.gh .c'); const n=[...b.closest('.grp').querySelectorAll('.unit.sel')].length; const old=gh.querySelector('.pill:not(.x):not(.r)'); if(old) old.remove(); if(n) gh.insertAdjacentHTML('afterbegin',`<span class="pill">${n} 선택</span>`); });
+    document.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{ const id=b.dataset.pick; sel.has(id)?sel.delete(id):sel.add(id); b.classList.toggle('sel',sel.has(id)); b.querySelector('.cb').textContent=sel.has(id)?'✓':''; const ok=$('#ok'); ok.disabled=!sel.size; ok.textContent=sel.size?`${sel.size}${unitN} ${mode==='assign'?'배정':'이동'}`:'선택하세요'; const gh=b.closest('.grp').querySelector('.gh .c'); const n=[...b.closest('.grp').querySelectorAll('.unit.sel')].length; const old=gh.querySelector('.sel-n'); if(old) old.remove(); if(n) gh.insertAdjacentHTML('afterbegin',`<span class="pill sel-n" style="background:#e8edfb;color:var(--accent);font-weight:700">${n} 선택</span>`); });
     $('#ok').onclick=()=>{ if(!sel.size) return; const ids=[...sel]; closeModal(); save(isP?'assignPeople':'assignInstruments', ids, target); };
   };
   render();
