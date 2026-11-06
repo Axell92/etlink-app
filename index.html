@@ -182,7 +182,7 @@ const mock = (()=>{
       {id:'s1',name:'판교 DC 증설',client:'SK-TNS',location:'성남 판교',period:'2026.09 ~ 2027.02',note:'',updated_at:'',updated_by:''},
       {id:'s2',name:'ICN11',client:'Digital Realty',location:'인천',period:'2026.06 ~ 2026.12',note:'액랭 TCS',updated_at:'',updated_by:''},
     ],
-    people: (function(){ let p=[]; try{ p=JSON.parse(document.getElementById('pseed').textContent)||[]; }catch(e){} p.forEach((x,i)=>{ if(i<3) x.site_id='s1'; if(i>=3&&i<6) x.site_id='s2'; }); return p; })(),
+    people: (function(){ let p=[]; try{ p=JSON.parse(document.getElementById('pseed').textContent)||[]; }catch(e){} p.forEach((x,i)=>{ if(i<3) x.site_id='s1'; if(i>=3&&i<6) x.site_id='s2'; if(i===14){ x.status='출산휴가'; x.status_until='2027-03-01'; } }); return p; })(),
     instruments: seed.map(x=>Object.assign({status:'정상',site_id:'',holder:'',note:'',updated_at:'',updated_by:'',maker:'',cal_date:'',cal_cycle:'',cal_due:'',cal_no:'',cal_type:''},x)),
   };
   // 미리보기: 몇 대는 현장에 배정된 상태로
@@ -207,7 +207,7 @@ const mock = (()=>{
 let data={sites:[],people:[],instruments:[]};
 let view={tab:'sites',siteId:null};
 let q={sites:'',people:'',instruments:''};
-let filt={peopleSite:'*',instSite:'*',instStatus:'*',instCat:'*'};
+let filt={peopleSite:'*',peopleStatus:'*',instSite:'*',instStatus:'*',instCat:'*'};
 let open={};               // 펼친 종류 그룹 (key → true)
 let editor='', pin='';
 try{ editor=localStorage.getItem('cx_editor')||''; pin=localStorage.getItem('cx_pin')||''; }catch(e){}
@@ -221,6 +221,9 @@ const baseModel=i=>(i.model||'').replace(/\s*\(\s*#?\d+\s*\)\s*$/,'').replace(/\
 const RANK=['대표이사','부사장','전무','상무','이사','부장','차장','과장','대리','주임','사원'];
 const rank=r=>{ const i=RANK.indexOf((r||'').trim()); return i<0?RANK.length:i; };
 const sortPeople=(a,b)=>rank(a.role)-rank(b.role)||(a.name||'').localeCompare(b.name||'');
+const LEAVE=['출산휴가','육아휴직','안식휴가','병가','휴직','교육·파견'];
+const isLeave=p=>!!p.status&&p.status!=='근무';
+const leaveLabel=p=>isLeave(p)?(p.status+(p.status_until?' ~'+p.status_until:'')):'';
 function groupPeople(list){
   const m=new Map();
   list.forEach(p=>{ const k=(p.affiliation||'소속 미상').trim(); if(!m.has(k)) m.set(k,{key:'P|'+k,title:k,items:[]}); m.get(k).items.push(p); });
@@ -316,9 +319,9 @@ function render(){
   bind();
 }
 function counts(siteId){
-  const p=data.people.filter(x=>(x.site_id||'')===siteId).length;
+  const ppl=data.people.filter(x=>(x.site_id||'')===siteId);
   const ins=data.instruments.filter(x=>(x.site_id||'')===siteId);
-  return {p,i:ins.length,warn:ins.filter(isWarn).length};
+  return {p:ppl.length,leave:ppl.filter(isLeave).length,i:ins.length,warn:ins.filter(isWarn).length};
 }
 function renderSites(){
   const kw=q.sites.trim();
@@ -326,7 +329,7 @@ function renderSites(){
   const card=(s,id)=>{ const c=counts(id); return `<button class="card" data-site="${esc(id)}">
     <div class="t">${esc(s.name)}</div>
     <div class="s">${esc([s.client,s.location,s.period].filter(Boolean).join(' · '))||'&nbsp;'}</div>
-    <div class="m"><span>인원 <b>${c.p}</b></span><span>측정기 <b>${c.i}</b></span>${c.warn?`<span class="r">교정 주의 ${c.warn}</span>`:''}</div></button>`; };
+    <div class="m"><span>인원 <b>${c.p}</b>${c.leave?` <span style="color:var(--warn)">(휴가 ${c.leave})</span>`:''}</span><span>측정기 <b>${c.i}</b></span>${c.warn?`<span class="r">교정 주의 ${c.warn}</span>`:''}</div></button>`; };
   return `<div class="search"><input id="q" placeholder="현장·발주처 검색" value="${esc(q.sites)}"></div>
     ${!kw?card({name:'사무실',client:'현장에 나가 있지 않은 인원·측정기'},''):''}
     ${list.map(s=>card(s,s.id)).join('')||'<div class="empty">등록된 현장이 없습니다. + 버튼으로 추가하세요.</div>'}
@@ -336,7 +339,8 @@ function personUnit(p,opts){ opts=opts||{};
   return `<button class="unit${opts.sel?' sel':''}" data-${opts.pick?'pick':'person'}="${esc(p.id)}">
     ${opts.pick?`<div class="cb">${opts.sel?'✓':''}</div>`:''}
     <div class="b"><div class="n">${esc(p.name)} <span style="color:var(--sub);font-weight:400;font-size:13px">${esc(p.role||'')}</span></div>
-    <div class="d">${esc(p.phone||'')}${opts.showSite?' · '+esc(siteName(p.site_id)):''}</div></div></button>`; }
+    <div class="d">${esc(p.phone||'')}${opts.showSite?' · '+esc(siteName(p.site_id)):''}</div></div>
+    ${isLeave(p)?`<div class="r"><span class="pill y">${esc(leaveLabel(p))}</span></div>`:''}</button>`; }
 function personRow(p,showSite){ return `<button class="row" data-person="${esc(p.id)}">
   <div class="b"><div class="n">${esc(p.name)} <span style="color:var(--sub);font-weight:400;font-size:13px">${esc([p.affiliation,p.role].filter(Boolean).join(' '))}</span></div>
   <div class="d">${esc(showSite?siteName(p.site_id):(p.phone||p.note||''))}</div></div>
@@ -382,10 +386,13 @@ function renderPeople(){
   const kw=q.people.trim();
   let list=data.people.filter(p=>!kw||[p.name,p.affiliation,p.role,p.phone].join(' ').includes(kw));
   if(filt.peopleSite!=='*') list=list.filter(p=>(p.site_id||'')===filt.peopleSite);
+  if(filt.peopleStatus==='leave') list=list.filter(isLeave);
+  const leaveN=data.people.filter(isLeave).length;
   const groups=groupPeople(list);
   return `<div class="search"><input id="q" placeholder="이름·직급·소속 검색" value="${esc(q.people)}"></div>
+    <div class="chips"><button class="chip${filt.peopleStatus==='*'?' on':''}" data-pstat="*">전체 ${data.people.length}</button><button class="chip${filt.peopleStatus==='leave'?' on':''}" data-pstat="leave">휴가 중 ${leaveN}</button></div>
     ${siteChips(filt.peopleSite,'psite')}
-    ${groups.map(g=>groupBlock(g,{ns:'lp',people:true,showSite:true,showOnSite:true,forceOpen:!!kw||filt.peopleSite!=='*'})).join('')||'<div class="empty">인원 없음</div>'}
+    ${groups.map(g=>groupBlock(g,{ns:'lp',people:true,showSite:true,showOnSite:true,forceOpen:!!kw||filt.peopleSite!=='*'||filt.peopleStatus!=='*'})).join('')||'<div class="empty">인원 없음</div>'}
     <button class="fab" id="fab" title="인원 신규 등록"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`;
 }
 function renderInstruments(){
@@ -419,6 +426,7 @@ function bind(){
   m.querySelectorAll('[data-inst]').forEach(b=>b.onclick=()=>openInst(data.instruments.find(x=>x.id===b.dataset.inst)));
   m.querySelectorAll('[data-grp]').forEach(b=>b.onclick=()=>{ const k=b.dataset.grp; open[k]=!open[k]; b.parentElement.classList.toggle('open',open[k]); });
   m.querySelectorAll('[data-psite]').forEach(b=>b.onclick=()=>{filt.peopleSite=b.dataset.psite;render();});
+  m.querySelectorAll('[data-pstat]').forEach(b=>b.onclick=()=>{filt.peopleStatus=b.dataset.pstat;render();});
   m.querySelectorAll('[data-isite]').forEach(b=>b.onclick=()=>{filt.instSite=b.dataset.isite;render();});
   m.querySelectorAll('[data-istat]').forEach(b=>b.onclick=()=>{filt.instStatus=b.dataset.istat;render();});
   m.querySelectorAll('[data-icat]').forEach(b=>b.onclick=()=>{filt.instCat=b.dataset.icat;render();});
@@ -471,6 +479,7 @@ function showPerson(p){
   const row=(l,v)=>v?`<div class="kv"><div class="k">${l}</div><div class="v">${esc(v)}</div></div>`:'';
   modal(`<h3>${esc(p.name)} <span style="color:var(--sub);font-weight:400;font-size:14px">${esc([p.role,p.affiliation].filter(Boolean).join(' · '))}</span></h3>
     <div class="body">
+      ${isLeave(p)?`<div class="kv"><div class="k">상태</div><div class="v"><span class="pill y">${esc(p.status)}</span>${p.status_until?` <span style="color:var(--sub);font-size:13px">복귀 예정 ${esc(p.status_until)}</span>`:''}</div></div>`:''}
       ${row('현재 위치',siteName(p.site_id))}
       ${p.phone?row('연락처',p.phone).replace(esc(p.phone),`<a href="tel:${esc(p.phone.replace(/[^0-9+]/g,''))}" style="color:var(--accent);text-decoration:none">${esc(p.phone)}</a> <span style="color:var(--muted);font-size:12px">(터치하면 전화)</span>`):''}
       ${row('이메일',p.email)}
@@ -493,12 +502,14 @@ function openPerson(p, defSite){
     <div class="g2"><div class="f"><label>생년월일</label><input name="birth" placeholder="1990-01-01" value="${esc(o.birth)}"></div>
     <div class="f"><label>입사일</label><input name="hired" placeholder="2020-01-01" value="${esc(o.hired)}"></div></div>
     <div class="f"><label>배정 현장</label>${siteSelect(o.site_id)}</div>
+    <div class="g2"><div class="f"><label>상태</label><select name="status"><option value="근무"${!isLeave(o)?' selected':''}>근무</option>${LEAVE.map(s=>`<option${o.status===s?' selected':''}>${s}</option>`).join('')}${isLeave(o)&&!LEAVE.includes(o.status)?`<option selected>${esc(o.status)}</option>`:''}</select></div>
+    <div class="f"><label>복귀 예정일</label><input name="status_until" type="date" value="${esc(o.status_until)}"></div></div>
     <div class="f"><label>메모</label><textarea name="note">${esc(o.note)}</textarea></div>
     ${o.updated_by?`<div class="note">최근 수정: ${esc(o.updated_by)} ${fmtTime(o.updated_at)}</div>`:''}
     <div class="btns">${p?'<button type="button" class="btn d w" id="del">삭제</button>':''}<button type="button" class="btn s" id="c">취소</button><button class="btn p">저장</button></div></form>`);
   $('#c').onclick=closeModal;
   if(p) $('#del').onclick=()=>confirmBox(`"${p.name}" 을(를) 목록에서 삭제할까요?`, ()=>save('deletePerson', p.id));
-  $('#pf').onsubmit=e=>{ e.preventDefault(); const v=formVals(e.target); closeModal(); save('savePerson', {...o, ...v}); };
+  $('#pf').onsubmit=e=>{ e.preventDefault(); const v=formVals(e.target); if(v.status==='근무'){ v.status=''; v.status_until=''; } closeModal(); save('savePerson', {...o, ...v}); };
 }
 function openInst(i, defSite){
   const o=i||{site_id:defSite||'',status:'정상',cal_cycle:'12',cal_type:'자체',category:filt.instCat!=='*'?filt.instCat:''};
