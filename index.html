@@ -561,7 +561,7 @@ function picker(mode, siteId, kind){
       <div class="search" style="margin-bottom:6px"><input id="pq" placeholder="${isP?'이름·직급 검색':'품명·모델·S/N 검색'}" value="${esc(kw)}"></div>
       ${cats.length?`<div class="chips"><button class="chip${cat==='*'?' on':''}" data-pc="*">전체</button>${cats.map(c=>`<button class="chip${cat===c?' on':''}" data-pc="${esc(c)}">${esc(c)}</button>`).join('')}</div>`:''}
       ${mode==='assign'&&siteId!==''?`<label class="sw"><input type="checkbox" id="onlyFree"${onlyFree?' checked':''}> 사무실 것만 보기 — 끄면 다른 현장에 있는 ${what}도 가져올 수 있음</label>`:''}
-      <div class="body">${groups.map(g=>groupBlock(g,{ns:'p',pick:true,people:isP,selected:sel,showSite:!onlyFree||mode==='move',forceOpen:!!k||groups.length===1||isP})).join('')||'<div class="empty">해당 항목 없음</div>'}</div>
+      <div class="body">${groups.map(g=>groupBlock(g,{ns:'p',pick:true,people:isP,selected:sel,showSite:!onlyFree||mode==='move',forceOpen:!!k})).join('')||'<div class="empty">해당 항목 없음</div>'}</div>
       <div class="btns"><button class="btn s w" id="c">취소</button><button class="btn p" id="ok"${sel.size?'':' disabled'}>${sel.size?`${sel.size}${unitN} ${mode==='assign'?'배정':'이동'}`:'선택하세요'}</button></div>`;
     const ov=$('#ov'); if(ov){ ov.querySelector('.sheet').innerHTML=body; } else modal(body);
     $('#c').onclick=closeModal;
