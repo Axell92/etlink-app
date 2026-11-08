@@ -369,7 +369,7 @@ function renderSiteDetail(id){
       ${s.note?`<div class="note">${esc(s.note)}</div>`:''}
       ${s.updated_by?`<div class="note">최근 수정: ${esc(s.updated_by)} ${fmtTime(s.updated_at)}</div>`:''}</div>
     <div class="sec"><h2>인원 ${ppl.length}</h2>${ppl.length?`<button class="add sub" id="movePerson">철수·이동</button>`:''}<button class="add" id="addPerson">+ 배정</button></div>
-    ${groupPeople(ppl).map(g=>groupBlock(g,{ns:'dp',people:true,forceOpen:true})).join('')||'<div class="empty">배정된 인원 없음</div>'}
+    ${groupPeople(ppl).map(g=>groupBlock(g,{ns:'dp',people:true})).join('')||'<div class="empty">배정된 인원 없음</div>'}
     <div class="sec"><h2>측정기 ${ins.length}</h2>${ins.length?`<button class="add sub" id="moveInst">반납·이동</button>`:''}<button class="add" id="addInst">+ 배정</button></div>
     ${groups.map(g=>groupBlock(g,{ns:'d'})).join('')||'<div class="empty">배정된 측정기 없음</div>'}`;
 }
