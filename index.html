@@ -142,6 +142,7 @@ nav button.on{color:var(--accent);font-weight:700}
     <button data-tab="sites"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 11h.01M15 11h.01M12 11h.01"/></svg>현장</button>
     <button data-tab="people"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4.5-6.2"/></svg>인원</button>
     <button data-tab="instruments"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h4"/></svg>측정기</button>
+    <button data-tab="standards"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5V5.5M8 7h8M8 10.5h8"/></svg>기준</button>
   </nav>
 </div>
 <div id="modal"></div>
@@ -150,6 +151,7 @@ nav button.on{color:var(--accent);font-weight:700}
 
 <script id="seed" type="application/json">[]</script>
 <script id="pseed" type="application/json">[]</script>
+<script id="sseed" type="application/json">[]</script>
 <script>
 /* ===================== 데이터 계층 ===================== */
 const HAS_GAS = !!(window.google && google.script && google.script.run);
@@ -184,6 +186,7 @@ const mock = (()=>{
     ],
     people: (function(){ let p=[]; try{ p=JSON.parse(document.getElementById('pseed').textContent)||[]; }catch(e){} p.forEach((x,i)=>{ if(i<3) x.site_id='s1'; if(i>=3&&i<6) x.site_id='s2'; if(i===14){ x.status='출산휴가'; x.status_until='2027-03-01'; } }); return p; })(),
     instruments: seed.map(x=>Object.assign({status:'정상',site_id:'',holder:'',note:'',updated_at:'',updated_by:'',maker:'',cal_date:'',cal_cycle:'',cal_due:'',cal_no:'',cal_type:''},x)),
+    standards: (function(){ try{ return JSON.parse(document.getElementById('sseed').textContent)||[]; }catch(e){ return []; } })(),
   };
   // 미리보기: 몇 대는 현장에 배정된 상태로
   DB.instruments.slice(0,4).forEach(x=>{x.site_id='s1';x.holder='조승만';});
@@ -204,9 +207,10 @@ const mock = (()=>{
 })();
 
 /* ===================== 상태 ===================== */
-let data={sites:[],people:[],instruments:[]};
+let data={sites:[],people:[],instruments:[],standards:[]};
+let stdView='cat';   // 기준 탭: 'cat'=시험별, 'equip'=장비별
 let view={tab:'sites',siteId:null};
-let q={sites:'',people:'',instruments:''};
+let q={sites:'',people:'',instruments:'',standards:''};
 let filt={peopleSite:'*',peopleStatus:'*',instSite:'*',instStatus:'*',instCat:'*'};
 let open={};               // 펼친 종류 그룹 (key → true)
 let editor='', pin='';
@@ -276,7 +280,7 @@ function askPin(then){
     <div class="btns"><button class="btn p">확인</button></div></form>`);
   $('#kf').onsubmit=e=>{ e.preventDefault(); const k=formVals(e.target).k; if(!k) return; pin=k; try{localStorage.setItem('cx_pin',k);}catch(x){} closeModal(); if(then) then(); };
 }
-function normalize(d){ d=d||{}; return {sites:d.sites||[],people:d.people||[],instruments:d.instruments||[]}; }
+function normalize(d){ d=d||{}; return {sites:d.sites||[],people:d.people||[],instruments:d.instruments||[],standards:d.standards||[]}; }
 /* 낙관적 저장: 화면 먼저 반영 → 서버 저장은 뒤에서. 실패하면 서버 상태로 되돌리고 알림 */
 const ENTITY={saveSite:'sites',deleteSite:'sites',savePerson:'people',deletePerson:'people',assignPeople:'people',saveInstrument:'instruments',deleteInstrument:'instruments',assignInstruments:'instruments'};
 let pending=0;
@@ -296,7 +300,7 @@ function save(fn, ...args){
   queue=queue.then(async()=>{
     try{
       const r=await api.call(fn, ...args, editor);
-      if(r && typeof r==='object'){ ['sites','people','instruments'].forEach(k=>{ if(Array.isArray(r[k])) data[k]=r[k]; }); }
+      if(r && typeof r==='object'){ ['sites','people','instruments','standards'].forEach(k=>{ if(Array.isArray(r[k])) data[k]=r[k]; }); }
       if(pending===1) render();           // 마지막 저장이면 서버 상태로 다시 그림
       toast('저장됨');
     } catch(e){
@@ -315,6 +319,7 @@ function render(){
   const m=$('#main');
   if(view.tab==='sites') m.innerHTML = view.siteId===null ? renderSites() : renderSiteDetail(view.siteId);
   else if(view.tab==='people') m.innerHTML = renderPeople();
+  else if(view.tab==='standards') m.innerHTML = renderStandards();
   else m.innerHTML = renderInstruments();
   bind();
 }
@@ -417,6 +422,59 @@ function renderInstruments(){
     <button class="fab" id="fab" title="측정기 신규 등록"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`;
 }
 
+/* ===================== 기준 탭 ===================== */
+const STAG={'법정':['법정값','r'],'통상':['통상·시방','y'],'없음':['국내 기준 없음','x'],'확인':['확인 필요','y']};
+const stdLeafTitle=r=>[r.item,r.sub].filter(Boolean).join(' › ');
+function stdBullets(s){
+  const out=[];
+  String(s||'').split(/\.\s+(?=[^\d\s])/).forEach(p=>{
+    p=p.replace(/\.$/,'').trim(); if(!p||p==='—') return;
+    const segs=p.split(' · ').map(x=>x.trim());
+    if(segs.length>=3){ const m=segs[0].match(/^(.*?[:：])\s*(.*)$/); if(m){ out.push(['h',m[1]]); segs[0]=m[2]; } segs.forEach(x=>out.push(['i',x])); }
+    else out.push(['b',p]);
+  });
+  return out;
+}
+function stdSorted(){ return [...data.standards].sort((a,b)=>(Number(a.order)||0)-(Number(b.order)||0)); }
+function renderStandards(){
+  const kw=q.standards.trim().toLowerCase();
+  let list=stdSorted();
+  if(kw) list=list.filter(r=>[r.cat,r.equip,r.item,r.sub,r.kr_std,r.kr_crit,r.intl_std,r.intl_crit,r.note].join(' ').toLowerCase().includes(kw));
+  const key=stdView==='cat'?'cat':'equip', other=stdView==='cat'?'equip':'cat';
+  const m=new Map();
+  list.forEach(r=>{ const k=r[key]||'기타'; if(!m.has(k)) m.set(k,[]); m.get(k).push(r); });
+  const groups=[...m.entries()];
+  const row=r=>`<button class="unit" data-std="${esc(r.id)}">
+      <div class="b"><div class="n">${esc(r[other])} <span style="color:var(--sub);font-weight:400">› ${esc(stdLeafTitle(r))}</span></div>
+      <div class="d">${esc(r.stage||'')}${r.tag&&STAG[r.tag]?' · '+esc(STAG[r.tag][0]):''}</div></div>
+      ${r.tag==='확인'?'<span class="pill y">확인</span>':''}</button>`;
+  const block=([k,items])=>{ const gk='g:s'+stdView+'|'+k, isOpen=!!open[gk]||!!kw;
+    return `<div class="grp${isOpen?' open':''}"><button class="gh" data-grp="${esc(gk)}"><span class="ar"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span><span class="n">${esc(k)}</span><span class="c"><span>${items.length}</span></span></button>
+      <div class="gb">${items.map(row).join('')}</div></div>`; };
+  return `<div class="search"><input id="q" placeholder="시험·장비·규격·수치 검색 (예: 22.9, 절연내력, NETA)" value="${esc(q.standards)}"></div>
+    <div class="chips"><button class="chip${stdView==='cat'?' on':''}" data-sview="cat">시험별</button><button class="chip${stdView==='equip'?' on':''}" data-sview="equip">장비별</button></div>
+    ${groups.map(block).join('')||'<div class="empty">'+(data.standards.length?'검색 결과 없음':'기준 데이터가 없습니다 — standards 시트를 확인하세요')+'</div>'}
+    <div class="note" style="text-align:center;margin:14px 0 4px">계약 시방·제조사값 우선 · 국내 10분 vs 국제 1분 · 최대사용전압 = 공칭 × 1.15/1.1</div>`;
+}
+function showStandard(r){
+  if(!r) return;
+  const tag=r.tag&&STAG[r.tag]?`<span class="pill ${STAG[r.tag][1]}">${esc(STAG[r.tag][0])}</span>`:'';
+  const blk=(lab,std,crit)=>`<div style="margin:12px 0 4px;font-size:12px;font-weight:700;color:var(--sub);letter-spacing:.02em">${lab}</div>
+    <div style="font-weight:500;margin-bottom:6px">${esc(std||'—')}</div>
+    <div style="font-size:14px;line-height:1.5">${stdBullets(crit).map(([k,x])=>k==='h'?`<div style="margin-top:4px">${esc(x)}</div>`:k==='i'?`<div style="padding-left:14px;color:var(--ink)">– ${esc(x)}</div>`:`<div style="margin-top:4px">• ${esc(x)}</div>`).join('')||'<div style="color:var(--muted)">—</div>'}</div>`;
+  modal(`<h3 style="margin-bottom:4px">${esc(r.cat)} <span style="color:var(--muted);font-weight:400">›</span> ${esc(r.equip)}</h3>
+    <div style="font-size:15px;font-weight:500;margin-bottom:8px">${esc(stdLeafTitle(r))}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${r.stage?`<span class="pill">${esc(r.stage)}</span>`:''}${tag}</div>
+    <div class="body">
+      ${blk('국내',r.kr_std,r.kr_crit)}
+      ${blk('국제',r.intl_std,r.intl_crit)}
+      ${r.note?`<div style="margin-top:14px;padding:10px 12px;border-left:3px solid var(--line);background:#fafafa;font-size:13px;color:var(--sub);white-space:pre-wrap">${esc(r.note)}</div>`:''}
+      <div class="note" style="margin-top:12px">계약 시방·제조사값 우선${r.updated?' · 기준일 '+esc(r.updated):''}</div>
+    </div>
+    <div class="btns"><button class="btn s" id="c">닫기</button></div>`);
+  $('#c').onclick=closeModal;
+}
+
 /* ===================== 이벤트 ===================== */
 function bind(){
   const m=$('#main');
@@ -430,13 +488,15 @@ function bind(){
   m.querySelectorAll('[data-isite]').forEach(b=>b.onclick=()=>{filt.instSite=b.dataset.isite;render();});
   m.querySelectorAll('[data-istat]').forEach(b=>b.onclick=()=>{filt.instStatus=b.dataset.istat;render();});
   m.querySelectorAll('[data-icat]').forEach(b=>b.onclick=()=>{filt.instCat=b.dataset.icat;render();});
+  m.querySelectorAll('[data-sview]').forEach(b=>b.onclick=()=>{stdView=b.dataset.sview;render();});
+  m.querySelectorAll('[data-std]').forEach(b=>b.onclick=()=>showStandard(data.standards.find(x=>x.id===b.dataset.std)));
   const back=$('#back'); if(back) back.onclick=()=>{ view.siteId=null; render(); if(history.state&&history.state.d){ ignorePop++; history.back(); } };
   const es=$('#editSite'); if(es) es.onclick=()=>openSite(data.sites.find(x=>x.id===view.siteId));
   const ap=$('#addPerson'); if(ap) ap.onclick=()=>picker('assign',view.siteId,'person');
   const mp=$('#movePerson'); if(mp) mp.onclick=()=>picker('move',view.siteId,'person');
   const ai=$('#addInst'); if(ai) ai.onclick=()=>picker('assign',view.siteId);
   const mi=$('#moveInst'); if(mi) mi.onclick=()=>picker('move',view.siteId);
-  const fab=$('#fab'); if(fab) fab.onclick=()=>{ if(view.tab==='sites') openSite(null); else if(view.tab==='people') openPerson(null, filt.peopleSite==='*'?'':filt.peopleSite); else openInst(null, filt.instSite==='*'?'':filt.instSite); };
+  const fab=$('#fab'); if(fab) fab.onclick=()=>{ if(view.tab==='standards') return; if(view.tab==='sites') openSite(null); else if(view.tab==='people') openPerson(null, filt.peopleSite==='*'?'':filt.peopleSite); else openInst(null, filt.instSite==='*'?'':filt.instSite); };
 }
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{ view.tab=b.dataset.tab; view.siteId=null; render(); window.scrollTo(0,0); });
 $('#refresh').onclick=()=>load(false);
