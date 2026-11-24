@@ -42,7 +42,7 @@
 - 측정기: typeKey = name|baseModel, 교정 만료/≤30일 임박 표시. 인원: 직급 순, 부서별 그룹, 장기휴가 상태(status/status_until)
 - 현장 상세·배정/이동 선택기: 그룹 기본 접힘, 검색 중에만 펼침
 - 기준 탭: 시험별/장비별 전환, 검색(전 필드), 접힌 그룹 → 잎 → 상세 모달(국내 블록 → 국제 블록 → 주의)
-- PIN: Script Property `PIN` 설정 시 쓰기 보호. 현재 OFF
+- PIN: Script Property `PIN` 설정 시 쓰기 보호. 사용자가 켜는 중 — 켜졌으면 이 줄을 "ON"으로 고칠 것
 
 ## 보안
 - `src/people_seed.json`·`seed_min.json`은 **가짜 시드**다. 실제 인원·측정기 데이터는 Google Sheet에만 있다. 실데이터를 저장소에 커밋하지 말 것 (공개 저장소)
